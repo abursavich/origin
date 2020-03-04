@@ -100,6 +100,12 @@ func (a *Authenticator) AuthenticateRequest(req *http.Request) (user.Info, bool,
 	}
 
 	remaining := req.TLS.PeerCertificates[0].NotAfter.Sub(time.Now())
+	if remaining <= 7*24*time.Hour {
+		glog.Infof("certificate expiring soon; expires: %v; subject: %v; issuer: %v",
+			req.TLS.PeerCertificates[0].NotAfter.Format(time.RFC3339),
+			req.TLS.PeerCertificates[0].Subject.String(),
+			req.TLS.PeerCertificates[0].Issuer.String())
+	}
 	clientCertificateExpirationHistogram.Observe(remaining.Seconds())
 	chains, err := req.TLS.PeerCertificates[0].Verify(optsCopy)
 	if err != nil {
